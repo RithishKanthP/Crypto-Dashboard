@@ -1,0 +1,34 @@
+# Python Dependencies for Cryptocurrency Dashboard
+# Copy these into your requirements.txt or install directly with pip
+
+# Core Web Framework
+Flask==3.1.0
+Flask-SQLAlchemy==3.1.1
+Werkzeug==3.1.3
+
+# Database
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.10
+
+# AWS Services
+boto3==1.35.84
+botocore==1.35.84
+
+# HTTP Requests and Email
+requests==2.32.3
+email-validator==2.2.0
+
+# Production Server
+gunicorn==23.0.0
+
+# Environment Variables (for local development)
+python-dotenv==1.0.1
+
+# Optional Development Dependencies
+pytest==8.3.4
+pytest-flask==1.3.0
+black==24.0.0
+flake8==7.0.0
+
+# Install command:
+# pip install Flask Flask-SQLAlchemy boto3 requests psycopg2-binary gunicorn python-dotenv email-validator

@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}Top 10 Cryptocurrencies - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="card-title mb-1">
+                                <i class="fas fa-trophy me-2"></i>
+                                Top 10 Cryptocurrencies
+                            </h1>
+                            <p class="card-text mb-0">Real-time market data and rankings</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            {% if last_update %}
+                                <small class="d-block">Last Updated:</small>
+                                <strong>{{ last_update.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}</strong>
+                                {% if last_update.status == 'success' %}
+                                    <i class="fas fa-check-circle text-success ms-1"></i>
+                                {% else %}
+                                    <i class="fas fa-exclamation-triangle text-warning ms-1"></i>
+                                {% endif %}
+                            {% else %}
+                                <small class="text-light">No recent updates</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    {% if crypto_data %}
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Market Cap</h6>
+                            <h4 class="mb-0">${{ "{:,.0f}".format(crypto_data|sum(attribute='market_cap_usd')) }}</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-pie fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">24h Volume</h6>
+                            <h4 class="mb-0">${{ "{:,.0f}".format(crypto_data|sum(attribute='volume_24h_usd')) }}</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exchange-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Avg. Price Change</h6>
+                            {% set avg_change = (crypto_data|sum(attribute='price_change_24h_percent') / crypto_data|length) %}
+                            <h4 class="mb-0">{{ "{:+.2f}".format(avg_change) }}%</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-percentage fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Data Points</h6>
+                            <h4 class="mb-0">{{ crypto_data|length }}</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-database fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Cryptocurrency Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-coins me-2"></i>
+                        Cryptocurrency Rankings
+                    </h5>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshData(event)">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                </div>
+                
+                <div class="card-body p-0">
+                    {% if crypto_data %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" class="text-center">#</th>
+                                        <th scope="col">Name</th>
+                                        <th scope="col" class="text-end">Price</th>
+                                        <th scope="col" class="text-end">24h Change</th>
+                                        <th scope="col" class="text-end">Market Cap</th>
+                                        <th scope="col" class="text-end">Volume (24h)</th>
+                                        <th scope="col" class="text-center">Chart</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for crypto in crypto_data %}
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary">{{ crypto.market_cap_rank }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="crypto-icon me-3">
+                                                    <i class="fab fa-bitcoin text-warning" style="font-size: 1.5rem;"></i>
+                                                </div>
+                                                <div>
+                                                    <strong>{{ crypto.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ crypto.symbol }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>${{ "{:,.4f}".format(crypto.price_usd) }}</strong>
+                                        </td>
+                                        <td class="text-end">
+                                            {% if crypto.price_change_24h_percent >= 0 %}
+                                                <span class="text-success">
+                                                    <i class="fas fa-arrow-up me-1"></i>
+                                                    +{{ "{:.2f}".format(crypto.price_change_24h_percent) }}%
+                                                </span>
+                                            {% else %}
+                                                <span class="text-danger">
+                                                    <i class="fas fa-arrow-down me-1"></i>
+                                                    {{ "{:.2f}".format(crypto.price_change_24h_percent) }}%
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>${{ "{:,.0f}".format(crypto.market_cap_usd) }}</strong>
+                                        </td>
+                                        <td class="text-end">
+                                            ${{ "{:,.0f}".format(crypto.volume_24h_usd) }}
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-outline-secondary btn-sm" 
+                                                    onclick="showChart('{{ crypto.crypto_id }}', '{{ crypto.name }}')">
+                                                <i class="fas fa-chart-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Cryptocurrency Data Available</h5>
+                            <p class="text-muted">Data is currently being fetched or there was an error retrieving the information.</p>
+                            <button class="btn btn-primary" onclick="refreshData(event)">
+                                <i class="fas fa-sync-alt me-1"></i>Try Refreshing
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Cap Distribution Chart -->
+    {% if crypto_data %}
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Market Cap Distribution
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="marketCapChart" width="400" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        24h Price Changes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="priceChangeChart" width="400" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal for individual crypto charts -->
+<div class="modal fade" id="cryptoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cryptoModalLabel">Cryptocurrency Chart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <canvas id="cryptoChart" width="800" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Initialize charts when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if crypto_data %}
+            initializeCharts();
+        {% endif %}
+    });
+    
+    function initializeCharts() {
+        // Market Cap Distribution Chart
+        const marketCapCtx = document.getElementById('marketCapChart').getContext('2d');
+        const marketCapChart = new Chart(marketCapCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    {% for crypto in crypto_data %}
+                        '{{ crypto.name }}'{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                datasets: [{
+                    data: [
+                        {% for crypto in crypto_data %}
+                            {{ crypto.market_cap_usd }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                        '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return context.label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Price Change Chart
+        const priceChangeCtx = document.getElementById('priceChangeChart').getContext('2d');
+        const priceChangeChart = new Chart(priceChangeCtx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    {% for crypto in crypto_data %}
+                        '{{ crypto.symbol }}'{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: '24h Price Change (%)',
+                    data: [
+                        {% for crypto in crypto_data %}
+                            {{ crypto.price_change_24h_percent }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        {% for crypto in crypto_data %}
+                            '{{ "rgba(40, 167, 69, 0.7)" if crypto.price_change_24h_percent >= 0 else "rgba(220, 53, 69, 0.7)" }}'{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    borderColor: [
+                        {% for crypto in crypto_data %}
+                            '{{ "rgba(40, 167, 69, 1)" if crypto.price_change_24h_percent >= 0 else "rgba(220, 53, 69, 1)" }}'{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Price Change (%)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    function showChart(cryptoId, cryptoName) {
+        // This would fetch historical data and show a detailed chart
+        // For now, show a placeholder message
+        document.getElementById('cryptoModalLabel').textContent = cryptoName + ' Chart';
+        const modal = new bootstrap.Modal(document.getElementById('cryptoModal'));
+        modal.show();
+        
+        // Placeholder chart - in a real implementation, you'd fetch historical data
+        const ctx = document.getElementById('cryptoChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                datasets: [{
+                    label: 'Price (USD)',
+                    data: [100, 105, 98, 110, 115, 108, 120], // Placeholder data
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
